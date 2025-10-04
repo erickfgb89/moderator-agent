@@ -39,3 +39,6 @@ export { MockCharacterAgent } from './agents/mock-character-agent.js';
 
 // Moderator
 export { SceneModerator } from './moderator/scene-moderator.js';
+
+// Output
+export { writeSceneOutputs } from './output/file-writer.js';

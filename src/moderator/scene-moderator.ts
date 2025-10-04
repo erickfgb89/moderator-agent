@@ -10,6 +10,7 @@ import type {
   SceneMetadata
 } from '../types/index.js';
 import { TaskCharacterAgent } from '../agents/task-character-agent.js';
+import { writeSceneOutputs } from '../output/file-writer.js';
 
 /**
  * Main orchestration class for running multi-character scenes.
@@ -105,12 +106,23 @@ export class SceneModerator implements ISceneModerator {
       goalAchieved
     );
 
-    return {
+    const result: SceneResult = {
       success: true,
       transcript: formattedTranscript,
       metadata,
       outputPath: `/data/scenes/${config.name}/`
     };
+
+    // Write outputs to filesystem
+    try {
+      const actualPath = await writeSceneOutputs(result);
+      result.outputPath = actualPath;
+    } catch (error) {
+      // Log error but don't fail the scene
+      console.error('Failed to write scene outputs:', error);
+    }
+
+    return result;
   }
 
   /**

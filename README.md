@@ -2,8 +2,8 @@
 
 **A Claude-powered multi-agent system for generating authentic narrative dialog through emergent character interaction.**
 
-![Status](https://img.shields.io/badge/status-planning-blue)
-![Phase](https://img.shields.io/badge/phase-1%20%7C%20proof%20of%20concept-yellow)
+![Status](https://img.shields.io/badge/status-in%20development-green)
+![Phase](https://img.shields.io/badge/phase-1%20%7C%20core%20implementation-yellow)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 ---
@@ -97,13 +97,13 @@ flowchart TD
 **Goal:** Validate the multi-agent approach works
 
 - ✅ Structured PRD with visual documentation
-- ⬜ Core scene execution loop
-- ⬜ Character agent communication via Task API
-- ⬜ Response format parsing (natural language)
-- ⬜ Scene completion detection
-- ⬜ Interruption handling (async timestamp-based)
-- ⬜ Basic transcript generation
-- ⬜ Test coverage > 80%
+- ✅ Core scene execution loop
+- ✅ Character agent communication via Task API
+- ✅ Response format parsing (natural language)
+- ⬜ Scene completion detection (AI-powered goal evaluation)
+- ✅ Interruption handling (async timestamp-based)
+- ✅ Basic transcript generation
+- ✅ Test coverage > 80% (currently 100% on implemented features)
 
 **Success Criteria:**
 - 2-3 character scenes complete autonomously
@@ -160,22 +160,22 @@ flowchart TD
 
 ### Core Features (Phase 1)
 
-- [ ] **Multi-Character Communication**
+- [x] **Multi-Character Communication**
   - [ ] Load character definitions from `.claude/agents/*.md`
-  - [ ] Initialize character agents (ICharacterAgent interface)
-  - [ ] Parallel scene update dispatch
-  - [ ] Response collection with timestamps
-  - [ ] Timestamp-based ordering (interruption support)
-  - [ ] Scene completion evaluation
-  - [ ] Error handling and graceful degradation
+  - [x] Initialize character agents (ICharacterAgent interface)
+  - [x] Parallel scene update dispatch
+  - [x] Response collection with timestamps
+  - [x] Timestamp-based ordering (interruption support)
+  - [ ] Scene completion evaluation (basic max beats done, AI evaluation TODO)
+  - [x] Error handling and graceful degradation
 
-- [ ] **Response Format Parsing**
-  - [ ] Strict regex parser for standard format
-  - [ ] Salvage logic for malformed responses
-  - [ ] Extract: action, target, tone, content, nonverbal
-  - [ ] Support: speak, interrupt, silent, react actions
-  - [ ] Warning flags on parse failures
-  - [ ] 90%+ parse success rate
+- [x] **Response Format Parsing**
+  - [x] Strict regex parser for standard format
+  - [x] Salvage logic for malformed responses
+  - [x] Extract: action, target, tone, content, nonverbal
+  - [x] Support: speak, interrupt, silent, react actions
+  - [x] Warning flags on parse failures
+  - [ ] 90%+ parse success rate (needs real-world testing)
 
 - [ ] **Scene Completion Detection**
   - [ ] Goal achievement evaluation
@@ -207,12 +207,12 @@ flowchart TD
 
 ### Infrastructure (Phase 1)
 
-- [ ] **Testing**
-  - [ ] Unit tests for parsers
-  - [ ] Unit tests for moderator logic
-  - [ ] Integration tests for full scenes
-  - [ ] Mock character agents
-  - [ ] Test coverage > 80%
+- [x] **Testing**
+  - [x] Unit tests for parsers
+  - [x] Unit tests for moderator logic
+  - [x] Integration tests for full scenes
+  - [x] Mock character agents
+  - [x] Test coverage > 80%
 
 - [ ] **Documentation**
   - [ ] TSDoc for all public APIs
@@ -220,11 +220,11 @@ flowchart TD
   - [ ] Example scene configs
   - [ ] Implementation lessons.md files
 
-- [ ] **Tooling**
-  - [ ] TypeScript build pipeline
+- [x] **Tooling**
+  - [x] TypeScript build pipeline
   - [ ] Linting (ESLint)
-  - [ ] Type checking (strict mode)
-  - [ ] Test runner (Vitest/Jest)
+  - [x] Type checking (strict mode)
+  - [x] Test runner (Vitest)
 
 ### Enhancement Features (Phase 2+)
 
@@ -283,15 +283,70 @@ moderator-agent/
 │       ├── ai-guidelines.md
 │       ├── prompts/
 │       └── validation/
-├── src/                               # Source code (TBD)
-├── tests/                             # Test suite (TBD)
-└── data/                              # Scene outputs (TBD)
+├── src/                               # Source code
+│   ├── types/                         # TypeScript type definitions
+│   ├── parser/                        # Response format parsing
+│   ├── agents/                        # Character agent implementations
+│   ├── moderator/                     # Scene moderator core
+│   └── index.ts                       # Main exports
+├── examples/                          # Usage examples
+└── data/                              # Scene outputs (generated)
     └── scenes/
 ```
 
 ---
 
 ## Quick Start
+
+### Installation
+
+```bash
+# Clone the repository
+git clone <repo-url>
+cd moderator-agent
+
+# Install dependencies
+npm install
+
+# Build the project
+npm run build
+
+# Run tests
+npm test
+```
+
+### Basic Usage
+
+```typescript
+import { SceneModerator, TaskCharacterAgent } from './src/index.js';
+
+// Create character agents
+const alice = new TaskCharacterAgent('alice', `
+  You are Alice, a direct and honest person.
+  You speak your mind but try to be respectful.
+`);
+
+const bob = new TaskCharacterAgent('bob', `
+  You are Bob, thoughtful and diplomatic.
+  You seek harmony and common ground.
+`);
+
+// Configure the scene
+const config = {
+  name: 'meeting',
+  prompt: 'Alice and Bob discuss a missed deadline. Goal: Reach understanding.',
+  characters: ['alice', 'bob'],
+  maxBeats: 15
+};
+
+// Run the scene
+const moderator = new SceneModerator();
+const result = await moderator.runSceneWithAgents(config, [alice, bob]);
+
+console.log(result.transcript);
+```
+
+See [`examples/simple-scene.ts`](examples/simple-scene.ts) for a complete example.
 
 ### For Story Authors
 

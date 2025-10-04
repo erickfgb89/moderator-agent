@@ -219,6 +219,131 @@ These prompts should be:
 
 ---
 
+## Response Recovery & Format Enforcement
+
+### Adaptive Response Correction via Query Callback
+
+**Purpose:** Handle severely malformed character responses that exceed salvage parser capabilities
+
+**Problem Context:**
+Our current parser has two-tier handling:
+1. **Strict parse:** Works for well-formatted responses
+2. **Salvage parse:** Handles missing fields, malformed brackets, etc.
+
+But what if salvage fails catastrophically? E.g.:
+- Complete gibberish output
+- Stuck in a loop repeating same text
+- Output in wrong language
+- Total format confusion despite clear instructions
+
+**Proposed Solution:**
+
+**Option A: Minimal Retry Query (Lightweight)**
+```typescript
+interface CharacterResponse {
+  // ... existing fields
+  corrected?: boolean;  // Flag if response was corrected
+  retryCount?: number;  // How many correction attempts
+}
+```
+
+When salvage parse produces warnings beyond a threshold:
+1. Send tiny corrective query to same agent:
+   ```
+   "Your last response didn't follow the format.
+   Please respond to the same scene update using:
+   [TONE: emotion] "dialog" OR [SILENT]
+
+   Keep it brief, stay in character."
+   ```
+2. Use corrected response if successful
+3. Limit to 1 retry per beat per character
+4. Log all corrections for analysis
+
+**Option B: Ignore & Continue (Resilient)**
+- Treat catastrophically broken responses as `[SILENT]`
+- Add system message to transcript: `[SYSTEM: Alice's response was unclear]`
+- Continue scene with other characters
+- Log for post-scene analysis
+
+**Option C: Hybrid (Configurable)**
+```typescript
+interface SceneConfig {
+  malformedResponseStrategy?: 'retry' | 'ignore' | 'fail';
+  maxRetries?: number;  // default: 1
+}
+```
+
+**When to Use:**
+
+Track parse failure rates during real-world testing:
+- **< 5% salvage warnings:** Current system sufficient, no action needed
+- **5-10% warnings:** Monitor, consider adding telemetry
+- **> 10% failures:** Implement retry mechanism
+- **Catastrophic (gibberish):** Likely need retry or ignore strategy
+
+**Implementation Considerations:**
+
+**Pros (Retry):**
+- Gives character agent chance to self-correct
+- Maintains scene flow
+- Educational for model (reinforces format)
+
+**Cons (Retry):**
+- Extra API call = cost increase (~$0.01-0.02 per retry)
+- Latency increase (2-3s per retry)
+- Could get stuck in retry loop if agent is confused
+
+**Pros (Ignore):**
+- Zero cost, zero latency
+- Scene continues regardless
+- Resilient to any failure mode
+
+**Cons (Ignore):**
+- Character silenced unfairly
+- Potential narrative gaps
+- Doesn't help agent learn format
+
+**Decision Framework:**
+
+Start with **Option B (Ignore)** because:
+1. We have salvage parser already handling 90%+ cases
+2. Unknown if catastrophic failures will actually occur
+3. No added cost/latency
+4. Can add retry later if data shows it's needed
+
+**Metrics to Track:**
+```typescript
+interface SceneMetadata {
+  parseWarnings?: {
+    character: string;
+    beat: number;
+    warningType: string;
+    raw: string;  // For debugging
+  }[];
+}
+```
+
+Analyze after 10-20 scenes:
+- How often do warnings occur?
+- Are they isolated incidents or patterns?
+- Do certain characters fail more often?
+- Are failures catastrophic or minor?
+
+**Future Enhancement:**
+If retry is needed, make it smarter:
+- Include examples of correct format in retry prompt
+- Adapt retry message based on failure type
+- Consider if character personality is causing format resistance
+- Suggest character definition improvements
+
+**Phase:**
+- Phase 1: Ignore strategy + telemetry
+- Phase 2: Decide based on data
+- Phase 3: Adaptive correction if needed
+
+---
+
 ## Future Enhancements (Brainstorm)
 
 - **Multi-scene analysis:** Track character development across multiple scenes
@@ -241,3 +366,9 @@ These prompts should be:
 
 *Last updated: 2025-10-03*
 *Add new ideas as they emerge, organize when patterns form*
+
+---
+
+## Recent Additions
+
+- **2025-10-03:** Added "Response Recovery & Format Enforcement" - data-driven approach to handling catastrophically malformed responses

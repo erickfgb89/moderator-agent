@@ -95,16 +95,16 @@ AI implementation guides:
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Multi-Character Communication | 📋 Planned | Core scene loop |
-| Response Format Parsing | 📋 Planned | Natural language with minimal structure |
-| Scene Completion Detection | 📋 Planned | AI-powered goal evaluation |
-| Interruption Handling | 📋 Planned | Async timestamp-based ordering |
-| World Event Injection | 📋 Planned | Moderator discretion |
-| Transcript Generation | 📋 Planned | Natural format for AI consumption |
+| Multi-Character Communication | ✅ Core Complete | [Summary](features/multi-character-communication/implementation-summary.md) - Scene loop, parallel dispatch, ordering |
+| Response Format Parsing | ✅ Complete | 91% coverage, salvage logic, all action types |
+| Scene Completion Detection | 🔄 Partial | Max beats works, AI evaluation TODO |
+| Interruption Handling | ✅ Complete | Async collection, timestamp ordering |
+| World Event Injection | 📋 Planned | Deferred to next iteration |
+| Transcript Generation | ✅ Complete | Formatted output, metadata support |
 
 **Legend:**
 - 📋 Planned - Specification exists, not started
-- 🔄 In Progress - Implementation underway
+- 🔄 Partial - Core working, enhancements pending
 - ⚠️ Needs Revision - Attempted but requires changes
 - ✅ Complete - Implemented and validated
 

@@ -3,21 +3,22 @@ import type { ICharacterAgent, SceneUpdate, CharacterResponse } from '../types/i
 import { parseResponse } from '../parser/response-parser.js';
 
 /**
- * Character agent implementation using the Claude Agent SDK query() function.
- * Each invocation creates a fresh interaction with no memory of previous beats.
+ * Character agent implementation using the Claude Agent SDK with filesystem-based agents.
+ *
+ * Characters are defined in `.claude/agents/{name}.md` files and automatically loaded
+ * by the SDK. This agent class coordinates scene updates and parses responses.
  */
 export class TaskCharacterAgent implements ICharacterAgent {
-  constructor(
-    public readonly name: string,
-    private readonly personality: string
-  ) {}
+  constructor(public readonly name: string) {}
 
   /**
    * Responds to a scene update with the character's action.
+   *
+   * Uses the SDK's agents parameter to invoke the filesystem-based character agent.
    */
   async respondTo(update: SceneUpdate): Promise<CharacterResponse> {
-    const prompt = this.buildPrompt(update);
-    const raw = await this.callAgent(prompt);
+    const prompt = this.buildScenePrompt(update);
+    const raw = await this.callCharacterAgent(prompt);
     const timestamp = Date.now();
 
     return {
@@ -28,14 +29,11 @@ export class TaskCharacterAgent implements ICharacterAgent {
   }
 
   /**
-   * Builds the prompt for the character agent based on the scene update.
+   * Builds the scene-specific prompt for the character agent.
+   * The character's personality is already in their .md file.
    */
-  private buildPrompt(update: SceneUpdate): string {
-    return `You are ${this.name}, a character in an ongoing scene. Your personality and behavior:
-
-${this.personality}
-
-## Current Scene Context
+  private buildScenePrompt(update: SceneUpdate): string {
+    return `## Current Scene Context
 ${update.sceneContext}
 
 ## Recent Transcript
@@ -48,20 +46,7 @@ ${update.moderatorNote ? `## Moderator Note\n${update.moderatorNote}` : ''}
 ## Your Response
 Beat #${update.beat}
 
-Respond in this format:
-- [TO: <character>, TONE: <emotion>] "dialog" for directed speech
-- [TONE: <emotion>] "dialog" for general speech
-- [INTERRUPT after "<phrase>", TONE: <emotion>] "dialog" to interrupt
-- [SILENT] or [SILENT, *nonverbal action*] to stay quiet
-- [REACT, TONE: <emotion>, *nonverbal action*] for non-verbal reaction
-
-Examples:
-[TO: Alice, TONE: angry] "Why did you do that?"
-[TONE: nervous, *fidgets*] "Maybe we should calm down."
-[INTERRUPT after "I think we should", TONE: furious] "No!"
-[SILENT, *crosses arms*]
-
-You may speak, stay silent, or interrupt based on your personality and the scene context. Choose wisely.`;
+Respond as your character to this scene update using the format specified in your character definition.`;
   }
 
   /**
@@ -80,11 +65,15 @@ You may speak, stay silent, or interrupt based on your personality and the scene
   }
 
   /**
-   * Calls the Claude agent and returns the final response text.
+   * Calls the character agent by explicitly requesting it in the prompt.
+   * The SDK auto-loads the agent from `.claude/agents/{name}.md` and routes to it.
    */
-  private async callAgent(prompt: string): Promise<string> {
+  private async callCharacterAgent(prompt: string): Promise<string> {
+    // Request the character agent explicitly by name
+    const agentPrompt = `Use the ${this.name} agent to respond to this scene update:\n\n${prompt}`;
+
     const messages = query({
-      prompt
+      prompt: agentPrompt
     });
 
     let fullResponse = '';

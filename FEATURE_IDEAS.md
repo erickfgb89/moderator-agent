@@ -31,6 +31,7 @@ An evaluation agent that analyzes character definition files (`.claude/agents/*.
 - Provide actionable feedback: "Add more detail about how Alice responds when frustrated"
 - Could be optional (warn) or required (block)
 - Evaluation criteria should be versioned with PRD
+- **Character Definition Template:** Will be created alongside this evaluator feature (template and evaluator designed together)
 
 **Evolving Capabilities List:**
 As we discover new organic interaction patterns, this list grows:

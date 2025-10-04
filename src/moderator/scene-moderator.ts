@@ -9,6 +9,7 @@ import type {
   CharacterResponse,
   SceneMetadata
 } from '../types/index.js';
+import { TaskCharacterAgent } from '../agents/task-character-agent.js';
 
 /**
  * Main orchestration class for running multi-character scenes.
@@ -17,13 +18,19 @@ import type {
 export class SceneModerator implements ISceneModerator {
   /**
    * Runs a complete scene from start to finish.
-   * This is the main entry point that will load character definitions.
+   *
+   * Character definitions are automatically loaded from `.claude/agents/{name}.md`
+   * by the SDK when TaskCharacterAgent references them.
    */
-  async runScene(_config: SceneConfig): Promise<SceneResult> {
-    // TODO: Load character definitions from .claude/agents/*.md
-    // TODO: Create TaskCharacterAgent instances
-    // For now, this method is not implemented
-    throw new Error('runScene not yet implemented - use runSceneWithAgents for testing');
+  async runScene(config: SceneConfig): Promise<SceneResult> {
+    // Create TaskCharacterAgent instances for each character
+    // The SDK will auto-load their definitions from .claude/agents/*.md
+    const agents = config.characters.map(
+      name => new TaskCharacterAgent(name)
+    );
+
+    // Run the scene with the agents
+    return this.runSceneWithAgents(config, agents);
   }
 
   /**

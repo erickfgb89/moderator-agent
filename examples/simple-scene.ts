@@ -1,27 +1,16 @@
 /**
- * Simple example of running a 2-character scene
+ * Simple example of running a 2-character scene using filesystem-based agents.
+ *
+ * Character definitions are loaded from `.claude/agents/alice.md` and
+ * `.claude/agents/bob.md` automatically by the SDK.
  */
 
-import { SceneModerator, TaskCharacterAgent } from '../src/index.js';
+import { SceneModerator } from '../src/index.js';
 import type { SceneConfig } from '../src/index.js';
 
 async function main() {
-  // Create character agents
-  const alice = new TaskCharacterAgent(
-    'alice',
-    `You are Alice, a direct and honest person who values truth and clarity.
-You speak your mind but try to be respectful.
-You tend to be assertive and don't shy away from confrontation when needed.`
-  );
-
-  const bob = new TaskCharacterAgent(
-    'bob',
-    `You are Bob, a thoughtful and diplomatic person who seeks harmony.
-You prefer to find common ground and avoid conflict when possible.
-You listen carefully before responding and consider others' feelings.`
-  );
-
   // Configure the scene
+  // Characters 'alice' and 'bob' are loaded from .claude/agents/*.md
   const config: SceneConfig = {
     name: 'office-discussion',
     prompt: `Alice and Bob are discussing a project deadline that was missed.
@@ -33,7 +22,7 @@ Setting: Office meeting room, mid-afternoon`,
 
   // Run the scene
   const moderator = new SceneModerator();
-  const result = await moderator.runSceneWithAgents(config, [alice, bob]);
+  const result = await moderator.runScene(config);
 
   // Display results
   console.log('\n=== SCENE RESULT ===\n');
